@@ -175,4 +175,3 @@ def grafico_evolucion_mensual(df):
     plt.xlabel("Mes")
     plt.show()
 
-grafico_evolucion_mensual(df)
