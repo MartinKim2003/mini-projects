@@ -8,6 +8,9 @@ from anthropic import Anthropic
 import streamlit as st
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
+import locale
+locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+
 
 
 api_key = st.secrets.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
@@ -18,6 +21,7 @@ def consultar_claude(resumen, gastos_categoria, distribucion):
     Arma un prompt con los datos reales del mes
     y le pide a Claude un análisis personalizado
     """
+    gastos_str = gastos_categoria.to_string().encode('ascii', 'ignore').decode('ascii')
     prompt = f"""Eres un asesor financiero experimentado. Analiza los gastos de un estudiante universitario argentino de 22 anos que vive en Buenos Aires y genera recomendaciones practicas y directas.
 
     DATOS FINANCIEROS DEL MES:
@@ -29,7 +33,7 @@ def consultar_claude(resumen, gastos_categoria, distribucion):
     - Ahorro objetivo (10%): {distribucion["ahorros"]:,.0f} ARS
 
     DESGLOSE DE GASTOS POR CATEGORIA:
-    {gastos_categoria.to_string()}
+    {gastos_str}
 
     OUTPUT:
     1. Resumen en 2-3 lineas de como le fue este mes
