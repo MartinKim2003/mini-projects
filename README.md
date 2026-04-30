@@ -1,3 +1,26 @@
+# Personal Finance App
+
+A Python-based personal finance app for tracking monthly expenses and income, automatically analyzing spending patterns, and receiving AI-powered financial recommendations.
+
+## What it does
+
+- Reads an Excel file with monthly expenses and income
+- Calculates totals, balance, and breakdown by category
+- Applies a 75/15/10 rule to distribute monthly income
+- Alerts when you're close to or over budget
+- Converts total expenses to USD (official, blue market, credit card rates)
+- Generates pie charts, bar charts, and monthly evolution graphs
+- Produces a personalized financial analysis using the Claude API
+
+## Tech stack
+
+- Python
+- pandas
+- matplotlib
+- anthropic (Claude API)
+- requests
+- python-dotenv
+
 # App de Gastos Personales
 
 App de finanzas personales construida en Python. Permite registrar gastos e ingresos en un Excel, analizarlos automáticamente y recibir recomendaciones personalizadas con IA.
@@ -20,13 +43,3 @@ App de finanzas personales construida en Python. Permite registrar gastos e ingr
 - anthropic (Claude API)
 - requests
 - python-dotenv
-
-## Cómo correrlo
-
-1. Cloná el repositorio
-2. Creá un archivo `.env` con tu API key: `ANTHROPIC_API_KEY=tu_key`
-3. Instalá las dependencias: `pip install -r requirements.txt`
-4. Completá el Excel en `data/raw/gastos_ejemplo.xlsx`
-5. Corrés `python main.py`
-
-## Estructura
