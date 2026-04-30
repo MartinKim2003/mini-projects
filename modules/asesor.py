@@ -5,9 +5,10 @@
 import os
 from dotenv import load_dotenv
 from anthropic import Anthropic
+import streamlit as st
 
-load_dotenv() # lee el archivo .env y carga las variables
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+api_key = st.secrets.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+client = Anthropic(api_key=api_key)
 
 def consultar_claude(resumen, gastos_categoria, distribucion):
     """
