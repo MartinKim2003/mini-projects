@@ -2,6 +2,6 @@ streamlit
 plotly
 pandas
 openpyxl
-anthropic
+anthropic==0.97.0
 python-dotenv
 requests
