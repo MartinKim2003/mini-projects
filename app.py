@@ -33,27 +33,24 @@ col3.metric("Balance", f"${resumen['balance']:,.0f} ARS")
 # =================================================
 st.header("📋 Distribución del ingreso")
 
-ingreso = st.number_input("Ingresá tu sueldo del mes", min_value=0, step=10000)
+ingreso = resumen["total_ingresos"]
+distribucion = calcular_distribucion(ingreso)
 
-if ingreso > 0:
-    distribucion = calcular_distribucion(ingreso)
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Podés gastar (75%)", f"${distribucion['gasto']:,.0f} ARS")
-    col2.metric("Invertir (15%)", f"${distribucion['inversion']:,.0f} ARS")
-    col3.metric("Ahorrar (10%)", f"${distribucion['ahorros']:,.0f} ARS")
+col1, col2, col3 = st.columns(3)
+col1.metric("Podés gastar (75%)", f"${distribucion['gasto']:,.0f} ARS")
+col2.metric("Invertir (15%)", f"${distribucion['inversion']:,.0f} ARS")
+col3.metric("Ahorrar (10%)", f"${distribucion['ahorros']:,.0f} ARS")
 
-    limite = distribucion["gasto"]
-    gasto_real = resumen["total_gastos"]
-    diferencia = limite - gasto_real
+limite = distribucion["gasto"]
+gasto_real = resumen["total_gastos"]
+diferencia = limite - gasto_real
 
-    if diferencia < 0:
-        st.error(f"🚨 Te pasaste del presupuesto por ${abs(diferencia):,.0f} ARS")
-    elif diferencia < 20000:
-        st.warning(f"⚠️ Cuidado, te quedan solo ${diferencia:,.0f} ARS")
-    else:
-        st.success(f"✅ Vas bien, te quedan ${diferencia:,.0f} ARS")
-
+if diferencia < 0:
+    st.error(f"🚨 Te pasaste del presupuesto por ${abs(diferencia):,.0f} ARS")
+elif diferencia < 20000:
+    st.warning(f"⚠️ Cuidado, te quedan solo ${diferencia:,.0f} ARS")
+else:
+    st.success(f"✅ Vas bien, te quedan ${diferencia:,.0f} ARS")
 # =================================================
 # SECCIÓN 3 - GRÁFICOS
 # =================================================
@@ -104,11 +101,7 @@ col3.metric("Dólar tarjeta", f"${conversion['tarjeta']:,.0f} USD", f"Cotizació
 # =================================================
 st.header("🤖 Asesor Financiero IA")
 
-if ingreso > 0:
-    if st.button("Generar análisis con IA"):
-        with st.spinner("Consultando a Claude..."):
-            distribucion = calcular_distribucion(ingreso)
-            consejo = consultar_claude(resumen, gastos_cat, distribucion)
-            st.markdown(consejo)
-else:
-    st.info("Ingresá tu sueldo arriba para activar el asesor IA.")
+if st.button("Generar análisis con IA"):
+    with st.spinner("Consultando a Claude..."):
+        consejo = consultar_claude(resumen, gastos_cat, distribucion)
+        st.markdown(consejo)
