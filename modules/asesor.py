@@ -6,6 +6,9 @@ import os
 from dotenv import load_dotenv
 from anthropic import Anthropic
 import streamlit as st
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 api_key = st.secrets.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
 client = Anthropic(api_key=api_key)
