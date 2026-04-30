@@ -1,238 +1,33 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-from dotenv import load_dotenv # la función load_dotenv lee el archivo .env y carga las variables dentro de ella
-from anthropic import Anthropic 
-import os 
+from modules.datos import cargar_datos, calcular_resumen, calcular_gastos_categoria, imprimir_resumen, imprimir_categoria
+from modules.planning import pedir_ingreso, calcular_distribucion, imprimir_distribucion, alertas
+from modules.graficos import grafico_torta, grafico_barras_presupuesto, grafico_evolucion_mensual
+from modules.cotizaciones import obtener_cotizaciones, convertir_a_dolar, imprimir_conversion
+from modules.asesor import consultar_claude
 
-
-"""MVP 1"""
-# =================================================
-# RESUMÉN DE GASTOS
-# =================================================
-
-def cargar_datos(ruta):
-    """
-    Lee el Excel y devuelve un DataFrame limpio.
-    Recibe la ruta del archivo comos str
-    """
-    df = pd.read_excel(ruta)
-    return df
-
-def calcular_resumen(df):
-    """
-    Recibe el DataFrame completo y devuelve un diccionario
-    con total_gastos, total_ingresos, balance.
-    Por qué un diccionario: Porque necesito devolver tres valores juntos!!
-    """
-    total_gastos = df[df["tipo"] == "gasto"]["monto"].sum()
-    total_ingresos = df[df["tipo"] == "ingreso"]["monto"].sum()
-    balance = total_ingresos - total_gastos
-    return {
-        "total_gastos": total_gastos,
-        "total_ingresos": total_ingresos,
-        "balance": balance
-    }
-
-def calcular_gastos_categoria(df):
-    """
-    Recibe el DataFrame completo y devuelve una Serie
-    con los gastos agrupados por categoria, ordenados de mayor a menor.
-    """
-    solo_gastos = df[df["tipo"]=="gasto"]
-    return solo_gastos.groupby("categoria")["monto"].sum().sort_values(ascending=False)
-
-def imprimir_resumen(resumen):
-    """
-    Recibe el diccionario de calcular_resumen() y lo imprime
-    Separamos impresión de cálculo: cada función hace una sola cosa
-    """
-    print("\n=== RESUMEN DEL MES ===")
-    print(f"Total ingresos: {resumen["total_ingresos"]: ,.0f} ARS")
-    print(f"Total gastos: {resumen["total_gastos"]: ,.0f} ARS")
-    print(f"Balance: {resumen["balance"]: ,.0f} ARS")
-    
-def imprimir_categoria (gastos_categoria):
-    """
-    Recibe la serie de calcular_gastos_categoria() y la imprime
-    """
-    print("\n=== GASTOS POR CATEGORÍA ===")
-    print(gastos_categoria)
-
-    print("\n=== TOP 5 ===")
-    print(gastos_categoria.head(5))
-
-"""
-EJECUCIÓN
-"""   
+# 1. Datos del Excel
 df = cargar_datos("data/raw/gastos_ejemplo.xlsx")
 resumen = calcular_resumen(df)
-gastos_cat= calcular_gastos_categoria(df)
-resumen_imp = imprimir_resumen(resumen)
-categoria = imprimir_categoria(gastos_cat)
-    
-    
-"""MVP 2"""
-# =================================================
-# ANOTACIÓN SUELDO + 50/30/20
-# =================================================
+gastos_cat = calcular_gastos_categoria(df)
+imprimir_resumen(resumen)
+imprimir_categoria(gastos_cat)
 
-# Le pedis el sueldo al usuario 
-def pedir_ingreso():
-    while True:
-        try:
-            sueldo = int(input("Ingrese su sueldo: "))
-            return sueldo
-        except ValueError:
-            print("No ha ingresado un sueldo. Intente de nuevo")
-
-
-# Calculas la distribución en base a (75/15/10)
-def calcular_distribucion(ingreso):
-    gasto = ingreso * 0.75
-    inversion = ingreso * 0.15
-    ahorros = ingreso * 0.10
-    return {
-        "gasto": gasto, 
-        "inversion": inversion,
-        "ahorros": ahorros         
-    }
-
-# Mostras las distribuciones
-def imprimir_distribucion(distribucion):    
-    print("\n=== RESUMEN DEL MES ===")
-    print(f"Este mes podes gastar: {distribucion["gasto"]: ,.0f} ARS")
-    print(f"Este mes debes invertir {distribucion["inversion"]: ,.0f} ARS")
-    print(f"Este mes debes ahorrar {distribucion["ahorros"]: ,.0f} ARS")
-
-# =================================================
-# BLOQUE ALERTAS
-# =================================================
-
-# Límite del gasto (75% del ingreso)
-# Total gastado real (viene de calcular_distribucion)
-# Diferencia entre límite y gasto real
-
-def alertas (distribucion, resumen):
-    # Cuánto puedo gastar vs cuánto gasté
-    limite = distribucion["gasto"]
-    gasto_real = resumen["total_gastos"]
-    diferencia = limite - gasto_real
-    
-    # Caso 1: pasas del límite
-    if diferencia < 0:
-        print(f"\n🚨 Te pasaste del presupuesto por {abs(diferencia):,.0f} ARS")
-    
-    # Caso 2: me quedan menos de 20,000
-    elif diferencia < 20000:
-        print(f"\n⚠️  Cuidado, te quedan solo {diferencia:,.0f} ARS")
-    
-    # Caso 3: todo bien
-    else:
-        print(f"\n✅ Vas bien, te quedan {diferencia:,.0f} ARS")
-
-
-# =================================================
-# GRÁFICOS
-# =================================================
-def grafico_torta(gastos_categoria):
-    
-    plt.figure(figsize=(8, 6))  # tamaño del gráfico
-    plt.pie(
-        gastos_categoria.values,       # los montos
-        labels=gastos_categoria.index, # los nombres de categoría
-        autopct='%1.1f%%'              # muestra el porcentaje en cada porción
-    )
-    plt.title("Gastos por categoría")
-    plt.show()
-
-#grafico_torta(gastos_cat)
-
-def grafico_barras_presupuesto(distribucion, resumen):
-    # Los dos valores a comparar
-    valores = [distribucion["gasto"], resumen["total_gastos"]]
-    etiquetas = ["Presupuesto (75%)", "Gasto real"]
-    
-    plt.figure(figsize=(6, 5))
-    plt.bar(etiquetas, valores, color=["green", "red"])
-    plt.title("Presupuesto vs Gasto real")
-    plt.ylabel("ARS")
-    plt.show()
-
-#grafico_barras_presupuesto(distribucion, resumen)
-
-def grafico_evolucion_mensual(df):
-    # Filtramos solo gastos
-    solo_gastos = df[df["tipo"] == "gasto"]
-    
-    # Extraemos el mes de la columna fecha y agrupamos
-    solo_gastos["mes"] = pd.to_datetime(solo_gastos["fecha"]).dt.to_period("M")
-    gastos_por_mes = solo_gastos.groupby("mes")["monto"].sum()
-    
-    plt.figure(figsize=(8, 5))
-    plt.bar(gastos_por_mes.index.astype(str), gastos_por_mes.values, color="steelblue")
-    plt.title("Evolución mensual de gastos")
-    plt.ylabel("ARS")
-    plt.xlabel("Mes")
-    plt.show()
-    
-"""MVP 3"""
-# =================================================
-# ASESOR
-# =================================================
-
-load_dotenv() # lee el archivo .env y carga las variables
-client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-def consultar_claude(resumen, gastos_categoria, distribucion):
-    """
-    Arma un prompt con los datos reales del mes
-    y le pide a Claude un análisis personalizado
-    """
-    prompt = f"""Eres un asesor financiero experimentado. Analiza los gastos de un estudiante universitario argentino de 22 años que vive en Buenos Aires
-    y genera recomendaciones prácticas y directas.
-
-    DATOS FINANCIEROS DEL MES:
-    - Ingresos total: {resumen["total_ingresos"]: ,.0f} ARS
-    - Gastos Totales: {resumen["total_gastos"]: ,.0f} ARS
-    - Balance net: {resumen ["balance"]: ,.0f} ARS
-    - Presupuesto asignado (75%): {distribucion["gasto"]: ,.0f} ARS
-    - Inversión recomendada (15%): {distribucion["inversion"]: ,.0f} ARS
-    - Ahorro objetivo (10%): {distribucion["ahorros"]: ,.0f} ARS
-    
-    DESGLOSE DE GASTOS POR CATEGORIA: 
-    {gastos_categoria.to_string()}
-    
-    OUTPUT:
-    1.Resumen en 2-3 líneas como le fue este mes (si estuvo dentro del presupuesto, donde gasto mas, etc)
-    2.Identifica la categoria donde mas gasta y si es necesaria o prescindible
-    3.Dame 3 recomendaciones concretas y accionables para proximos meses
-    4.Sugiere una estrategia paaara alcanzar sus objetivos de inversión y ahorro
-    
-    Se directo, no uses rodeos. Habla como si estuvieras en una reunión personal pero amigable
-    """
-    
-    mensaje = client.messages.create(
-        model = "claude-haiku-4-5-20251001",
-        max_tokens = 800,
-        messages = [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-
-    )
-    
-    return mensaje.content[0].text
-
+# 2. Distribución
 ingreso = pedir_ingreso()
 distribucion = calcular_distribucion(ingreso)
 imprimir_distribucion(distribucion)
 alertas(distribucion, resumen)
+
+# 3. Cotizaciones
+cotizaciones = obtener_cotizaciones()
+conversion = convertir_a_dolar(resumen["total_gastos"], cotizaciones)
+imprimir_conversion(conversion, cotizaciones)
+
+# 4. Gráficos
 grafico_torta(gastos_cat)
 grafico_barras_presupuesto(distribucion, resumen)
 grafico_evolucion_mensual(df)
 
+# 5. Asesor
 print("\n=== TU ASESOR FINANCIERO ===")
 consejo = consultar_claude(resumen, gastos_cat, distribucion)
 print(consejo)
