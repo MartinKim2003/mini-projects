@@ -1,6 +1,7 @@
 # Personal Finance App
 
 A Python-based personal finance app for tracking monthly expenses and income, automatically analyzing spending patterns, and receiving AI-powered financial recommendations.
+🚀 Live demo: https://mini-projects-gastos.streamlit.app
 
 ## What it does
 
